@@ -1,95 +1,76 @@
-import Image from "next/image";
+'use client';
 import styles from "./page.module.css";
+import {Suspense, useEffect, useState} from "react";
+import Footer from "@/app/components/Footer";
+import Header from "@/app/components/Header";
+import useCurrentTime from "@/app/hooks/useCurrentTime";
+import useBarCodeScanner from "@/app/hooks/useBarCodeScanner";
+import {getUserData} from "@/app/lib/actions";
+
+interface User{
+    name: string;
+    lastName: string;
+    isInvited: boolean;
+    hasEntered: string | undefined | null
+}
 
 export default function Home() {
-  return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+
+    const [ user, setUser ] = useState<User>({
+        name: "Bienvenido a ",
+        lastName: "Apec Perú",
+        isInvited: false,
+        hasEntered: null,
+    })
+    const [loading, setLoading] = useState(false);
+
+    const [ dni, setDni ] =  useState('');
+    const currentTime = useCurrentTime();
+
+    const handleScan = async (barcode: string) => {
+        console.log('Código escaneado:', barcode);
+        setLoading(true);
+        try {
+            const userData = await getUserData(barcode);
+            setUser({
+                name: userData.name,
+                lastName: userData.lastName,
+                isInvited: userData.is_invited,
+                hasEntered: userData.hasEntered
+            });
+        } catch (error) {
+            console.error('Error:', error);
+        } finally {
+            setLoading(false); // Detener el loader una vez que se completa la operación
+        }
+    };
+
+    useBarCodeScanner(handleScan);
+
+    const chipStyle = user.isInvited ? styles.invited : styles.notInvited;
+    return (
+        <div className={styles.container}>
+            <Header/>
+            <main className={styles.main}>
+                {loading ? (
+                    <p className={styles.loader}>Cargando...</p> // Puedes reemplazar esto con un spinner o cualquier otro indicador visual
+                ) : (
+                    <>
+                        <h1 className={styles.description}>
+                            {user.name + ' ' + user.lastName}
+                        </h1>
+                        <p className={`${styles.chip} ${chipStyle}`}>{user.isInvited ? 'Invitado' : 'No Invitado'}</p>
+                        {user.hasEntered === "Ya ingresó" && (
+                            <p className={`${styles.chip} ${styles.hasentered}`}>{user.hasEntered}</p>
+                        )}
+                        <Suspense>
+                            <p className={styles.hour}>{currentTime?.toLocaleTimeString()}</p>
+                        </Suspense>
+                    </>
+                )}
+            </main>
+            <Footer/>
         </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  );
+    );
 }
+

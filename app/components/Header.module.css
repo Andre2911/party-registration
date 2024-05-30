@@ -1,0 +1,12 @@
+.header {
+    /*background-color: #fff; !* Cambia el color de fondo según tu diseño *!*/
+    padding: 10px 20px; /* Espaciado alrededor del contenido del header */
+    position: fixed;
+    top: 0;
+}
+
+.logoContainer {
+    display: flex; /* Usa flexbox para alinear el logo adecuadamente */
+    justify-content: left; /* Centra el logo horizontalmente */
+    align-items: center; /* Centra el logo verticalmente */
+}
